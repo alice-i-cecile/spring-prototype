@@ -24,36 +24,37 @@
         }, 1000/FPS);
 
         var player = {
-          color: "#00A",
-          x: 50,
-          y: 270,
-          width: 20,
-          height: 30,
+          x: CANVAS_WIDTH/2,
+          y: CANVAS_HEIGHT/2,
+          radius: 15,
           draw: function() {
-            canvas.fillStyle = this.color;
-            canvas.fillRect(this.x, this.y, this.width, this.height);
+            canvas.beginPath();
+            canvas.arc(this.x, this.y,
+              this.radius,
+              0, 2*Math.PI);
+            canvas.stroke();
           }
         };
 
         function update() {
           if(keydown.left) {
-            player.x -= 5;
+            player.x -= 50;
           }
 
           if(keydown.right) {
-            player.x += 5;
+            player.x += 50;
           }
 
           if(keydown.up) {
-            player.y -= 5;
+            player.y -= 50;
           }
 
           if(keydown.down) {
-            player.y += 5;
+            player.y += 50;
           }
-          
-          player.x = player.x.clamp(0, CANVAS_WIDTH - player.width);
-          player.y = player.y.clamp(0, CANVAS_HEIGHT - player.height);
+
+          player.x = player.x.clamp(player.radius, CANVAS_WIDTH - player.radius);
+          player.y = player.y.clamp(player.radius, CANVAS_HEIGHT - player.radius);
         }
 
         function draw() {

@@ -44,7 +44,15 @@
             player.x += 5;
           }
 
+          if(keydown.up) {
+            player.y -= 5;
+          }
+
+          if(keydown.down) {
+            player.y += 5;
+          }
           player.x = player.x.clamp(0, CANVAS_WIDTH - player.width);
+          player.y = player.y.clamp(0, CANVAS_HEIGHT - player.height);
         }
 
         function draw() {

@@ -9,8 +9,8 @@
     <h1>Spring Prototype</h1>
     <script type='text/javascript'>
       //<![CDATA[
-        var CANVAS_WIDTH = 480;
-        var CANVAS_HEIGHT = 320;
+        var CANVAS_WIDTH = 1600;
+        var CANVAS_HEIGHT = 900;
         var FPS = 30;
 
         var player = {
@@ -57,14 +57,9 @@
 
         function draw() {
           canvas.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+          canvas.strokeRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
           player.draw();
         }
-
-        player.sprite = Sprite("player");
-
-        player.draw = function() {
-          this.sprite.draw(canvas, this.x, this.y);
-        };
       //]]>
     </script>
   </body>

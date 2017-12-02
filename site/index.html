@@ -13,6 +13,8 @@
         var CANVAS_HEIGHT = 900;
         var FPS = 30;
 
+        var GRAVITY = 0.5;
+
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
         var canvas = canvasElement.get(0).getContext("2d");
@@ -73,6 +75,9 @@
           if(keydown.down) {
             player.v_y += player.acceleration_rate;
           }
+
+          // Gravity
+          player.v_y += GRAVITY
 
           // Drag
           player.v_x *= 1 - player.drag_coefficient

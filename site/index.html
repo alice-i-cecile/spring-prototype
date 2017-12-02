@@ -28,8 +28,9 @@
           y: CANVAS_HEIGHT/2,
           v_x: 0,
           v_y: 0,
-          acceleration_rate : 1,
-          drag_coefficient : 0.05,
+          acceleration_rate: 1,
+          drag_coefficient: 0.01,
+          elasticity: 0.8,
           radius: 15,
           draw: function() {
             canvas.beginPath();
@@ -40,9 +41,23 @@
           }
         };
 
+        function check_collisions() {
+          if (player.x < player.radius || player.x > CANVAS_WIDTH - player.radius){
+            player.v_x *= -player.elasticity;
+          }
+
+          if (player.y < player.radius || player.y > CANVAS_HEIGHT - player.radius){
+            player.v_y *= -player.elasticity;
+          }
+
+          // Enforce existence in game area
+          player.x = player.x.clamp(player.radius, CANVAS_WIDTH - player.radius);
+          player.y = player.y.clamp(player.radius, CANVAS_HEIGHT - player.radius);
+        }
+
         function update() {
           // Controls
-          // FIXME: Allows for faster diagonal movement 
+          // FIXME: Allows for faster diagonal movement
           if(keydown.left) {
             player.v_x -= player.acceleration_rate;
           }
@@ -67,9 +82,9 @@
           player.x += player.v_x
           player.y += player.v_y
 
-          // Bounding
-          player.x = player.x.clamp(player.radius, CANVAS_WIDTH - player.radius);
-          player.y = player.y.clamp(player.radius, CANVAS_HEIGHT - player.radius);
+          // Collisions
+          check_collisions()
+
         }
 
         function draw() {

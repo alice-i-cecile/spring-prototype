@@ -13,6 +13,16 @@
         var CANVAS_HEIGHT = 900;
         var FPS = 30;
 
+        var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
+          "' height='" + CANVAS_HEIGHT + "'></canvas");
+        var canvas = canvasElement.get(0).getContext("2d");
+        canvasElement.appendTo('body');
+
+        setInterval(function() {
+          update();
+          draw();
+        }, 1000/FPS);
+
         var player = {
           color: "#00A",
           x: 50,
@@ -24,16 +34,6 @@
             canvas.fillRect(this.x, this.y, this.width, this.height);
           }
         };
-
-        var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
-          "' height='" + CANVAS_HEIGHT + "'></canvas");
-        var canvas = canvasElement.get(0).getContext("2d");
-        canvasElement.appendTo('body');
-
-        setInterval(function() {
-          update();
-          draw();
-        }, 1000/FPS);
 
         function update() {
           if(keydown.left) {
@@ -51,6 +51,7 @@
           if(keydown.down) {
             player.y += 5;
           }
+          
           player.x = player.x.clamp(0, CANVAS_WIDTH - player.width);
           player.y = player.y.clamp(0, CANVAS_HEIGHT - player.height);
         }
@@ -60,6 +61,7 @@
           canvas.strokeRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
           player.draw();
         }
+
       //]]>
     </script>
   </body>

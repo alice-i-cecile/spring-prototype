@@ -13,7 +13,7 @@
         var CANVAS_HEIGHT = 900;
         var FPS = 30;
 
-        var GRAVITY = 0.5;
+        var GRAVITY = 0.8;
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -57,38 +57,50 @@
           player.y = player.y.clamp(player.radius, CANVAS_HEIGHT - player.radius);
         }
 
-        function update() {
-          // Controls
-          // FIXME: Allows for faster diagonal movement
+        function controls() {
+          // Correct for faster diagonal movement
+          // Sum of vectors must be same as in case where moving along one axis
+          // so each is scaled by 1/sqrt(2)
+          step_acceleration_rate = player.acceleration_rate
+          if ((keydown.left || keydown.right) && (keydown.up || keydown.down)){
+            step_acceleration_rate *= 0.70710678118
+          }
+
+          // Movement controls
           if(keydown.left) {
-            player.v_x -= player.acceleration_rate;
+            player.v_x -= step_acceleration_rate;
           }
 
           if(keydown.right) {
-            player.v_x += player.acceleration_rate;
+            player.v_x += step_acceleration_rate;
           }
 
           if(keydown.up) {
-            player.v_y -= player.acceleration_rate;
+            player.v_y -= step_acceleration_rate;
           }
 
           if(keydown.down) {
-            player.v_y += player.acceleration_rate;
+            player.v_y += step_acceleration_rate;
           }
+        }
+
+        function update() {
+          // Controls
+          controls();
 
           // Gravity
-          player.v_y += GRAVITY
+          player.v_y += GRAVITY;
 
           // Drag
-          player.v_x *= 1 - player.drag_coefficient
-          player.v_y *= 1 - player.drag_coefficient
+          player.v_x *= 1 - player.drag_coefficient;
+          player.v_y *= 1 - player.drag_coefficient;
 
           // Movement
-          player.x += player.v_x
-          player.y += player.v_y
+          player.x += player.v_x;
+          player.y += player.v_y;
 
           // Collisions
-          check_collisions()
+          check_collisions();
 
         }
 

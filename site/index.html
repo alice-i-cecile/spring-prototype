@@ -25,23 +25,30 @@
           draw();
         }, 1000/FPS);
 
-        var player = {
-          x: CANVAS_WIDTH/2,
-          y: CANVAS_HEIGHT/2,
-          v_x: 0,
-          v_y: 0,
-          acceleration_rate: 1,
-          drag_coefficient: 0.01,
-          elasticity: 0.8,
-          radius: 15,
-          draw: function() {
+        class pointMass {
+          constructor (x, y){
+            this.x = x;
+            this.y = y;
+
+            this.v_x = 0;
+            this.v_y = 0;
+
+            this.acceleration_rate = 1;
+            this.drag_coefficient = 0.01;
+            this.elasticity = 0.8;
+            this.radius = 15;
+          }
+
+          draw() {
             canvas.beginPath();
             canvas.arc(this.x, this.y,
               this.radius,
               0, 2*Math.PI);
             canvas.stroke();
           }
-        };
+        }
+
+        var player = new pointMass(CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
 
         function update() {
           controls();

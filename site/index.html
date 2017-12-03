@@ -19,7 +19,7 @@
         var FPS = 60;
         var TIMESTEP = 1 / FPS;
 
-        var NUM_PM = 11;
+        var NUM_PM = 1001;
         // One of:
         //  - "RECTANGLE"
         //  - "CIRCLE"
@@ -28,18 +28,19 @@
         var SPAWN_FORMATION = "UNIFORM_RING";
         var SPAWN_SIZE = 0.5;
 
-        var GRAVITY = 0.1;
+        var GRAVITY = 0;
         var CONTROL_FORCE = 1;
         var DRAG_COEFFICIENT = 0.001;
         var ELASTICITY = 1;
         var PM_MASS = 1;
 
-        var SPRING_STIFFNESS = 500;
+        var SPRING_STIFFNESS = 400;
         // Array denotes connect k-neighbours; use keys to show connections
         // e.g. [1,2] connects neighbours and adjacent
         // Number means to form fraction of possible connections at random
         // Use n_connections / (NUM_PM * (NUM_PM - 1)) for scale invariance
-        var CONNECTIVITY = [1,2,3];
+        var RELATIVE_STRENGTH = 0.2;
+        var CONNECTIVITY = [1,2,3,4,5,50];
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -141,6 +142,7 @@
           CONNECTIVITY = CONNECTIVITY.concat(CONNECTIVITY.map(x => NUM_PM - x));
         }
 
+        // TODO: cleanup logic
         for (var i = 0; i <= NUM_PM - 1; i++){
           for (var j = 0; j <= NUM_PM - 1; j++){
             // Use only the upper triangular matrix to ensure single connections
@@ -176,6 +178,7 @@
                           CANVAS_WIDTH;
 
             this.stiffness = SPRING_STIFFNESS;
+            this.strength = this.stiffness * RELATIVE_STRENGTH;
 
             springs.push(this);
           }
@@ -185,6 +188,40 @@
             canvas.moveTo(this.pm_1.x, this.pm_1.y);
             canvas.lineTo(this.pm_2.x, this.pm_2.y);
             canvas.stroke();
+          }
+
+          muscle(){
+            // Relative strength is the fraction of the lenth the muscle can change
+            var force = {};
+            force.total = this.strength * this.length;
+
+            deltaX = (this.pm_2.x - this.pm_1.x) / CANVAS_WIDTH;
+            deltaY = (this.pm_2.y - this.pm_1.y) / CANVAS_WIDTH;
+            dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+
+            force.x = force.total * deltaX / dist;
+            force.y = force.total * deltaY / dist;
+
+            console.log(force);
+            return force;
+          }
+
+          contract(){
+            var force = this.muscle()
+            this.pm_1.a_x += force.x/this.pm_1.mass;
+            this.pm_2.a_x -= force.x/this.pm_2.mass;
+
+            this.pm_1.a_y += force.y/this.pm_1.mass;
+            this.pm_2.a_y -= force.y/this.pm_2.mass;
+          }
+
+          expand(){
+            var force = this.muscle()
+            this.pm_1.a_x -= force.x/this.pm_1.mass;
+            this.pm_2.a_x += force.x/this.pm_2.mass;
+
+            this.pm_1.a_y -= force.y/this.pm_1.mass;
+            this.pm_2.a_y += force.y/this.pm_2.mass;
           }
         }
 
@@ -239,6 +276,7 @@
           })
         }
 
+        // TODO: move into Spring class
         function forces(sp){
           // Hooke's law
           // TODO: add dampened springs
@@ -257,6 +295,17 @@
 
           sp.pm_1.a_y += F_y / sp.pm_1.mass;
           sp.pm_2.a_y -= F_y / sp.pm_2.mass;
+
+
+          // Muscle controls
+
+          if (keydown.space){
+            sp.expand();
+          }
+
+          if (keydown.ctrl){
+            sp.contract();
+          }
 
         }
 

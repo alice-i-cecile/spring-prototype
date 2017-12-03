@@ -34,13 +34,13 @@
         var ELASTICITY = 0.9;
         var PM_MASS = 1;
 
-        var SPRING_STIFFNESS = 400;
+        var SPRING_STIFFNESS = 10;
         // Array denotes connect k-neighbours; use keys to show connections
         // e.g. [1,2] connects neighbours and adjacent
         // Number means to form fraction of possible connections at random
         // Use n_connections / (NUM_PM * (NUM_PM - 1)) for scale invariance
         var RELATIVE_STRENGTH = 0.2;
-        var CONNECTIVITY = [1,2,3,4,5];
+        var CONNECTIVITY = [1,2,3];
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -98,8 +98,8 @@
         } else if (SPAWN_FORMATION == "CIRCLE"){
           center_x = CANVAS_WIDTH/2;
           center_y = CANVAS_HEIGHT/2;
-          max_radius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) / 2;
-          radius = max_radius * SPAWN_SIZE;
+          maxRadius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) / 2;
+          radius = maxRadius * SPAWN_SIZE;
 
           for (var i = 1; i <= NUM_PM; i++){
             r_i = Math.random() * radius;
@@ -125,8 +125,8 @@
         } else if (SPAWN_FORMATION == "UNIFORM_RING"){
           center_x = CANVAS_WIDTH/2;
           center_y = CANVAS_HEIGHT/2;
-          max_radius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) / 2;
-          radius = max_radius * SPAWN_SIZE;
+          maxRadius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) / 2;
+          radius = maxRadius * SPAWN_SIZE;
 
           for (var i = 1; i <= NUM_PM; i++){
             theta_i = i / NUM_PM * 2 * Math.PI;
@@ -176,9 +176,10 @@
             this.pm_1 = pm_1;
             this.pm_2 = pm_2;
 
-            this.length = Math.sqrt((pm_2.x - pm_1.x)*(pm_2.x - pm_1.x) +
-                                    (pm_2.y - pm_1.y)*(pm_2.y - pm_1.y)) /
-                          CANVAS_WIDTH;
+            this.deltaX = (this.pm_2.x - this.pm_1.x)/CANVAS_WIDTH;
+            this.deltaY = (this.pm_2.y - this.pm_1.y)/CANVAS_WIDTH;
+            this.length = this.compute_length(); // resting distance
+            this.dist = this.length; // current distance
 
             this.stiffness = SPRING_STIFFNESS;
             this.strength = this.stiffness * RELATIVE_STRENGTH;
@@ -193,18 +194,20 @@
             canvas.stroke();
           }
 
-          springForce() {
-            var deltaX = (this.pm_2.x - this.pm_1.x) / CANVAS_WIDTH;
-            var deltaY = (this.pm_2.y - this.pm_1.y) / CANVAS_WIDTH;
-            var dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+          compute_length() {
+            var dist = Math.sqrt(this.deltaX*this.deltaX + this.deltaY*this.deltaY);
             // If distance becomes zero then object disappears
             dist = Math.max(dist, 1e-6);
 
+            return dist;
+          }
+
+          springForce() {
             // Hooke's law
             var force = {};
-            force.total = -1 * this.stiffness * (this.length - dist);
-            force.x = force.total * deltaX / dist;
-            force.y = force.total * deltaY / dist;
+            force.total = -1 * this.stiffness * (this.length - this.dist);
+            force.x = force.total * this.deltaX / this.dist;
+            force.y = force.total * this.deltaY / this.dist;
 
             this.pm_1.F_x += force.x;
             this.pm_2.F_x -= force.x;
@@ -214,18 +217,12 @@
           }
 
           muscle(){
-            var deltaX = (this.pm_2.x - this.pm_1.x) / CANVAS_WIDTH;
-            var deltaY = (this.pm_2.y - this.pm_1.y) / CANVAS_WIDTH;
-            var dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
-            // If distance becomes zero then object disappears
-            dist = Math.max(dist, 1e-6);
-
             // Relative strength is the fraction of the lenth the muscle can change
             var force = {};
             force.total = this.strength * this.length;
 
-            force.x = force.total * deltaX / dist;
-            force.y = force.total * deltaY / dist;
+            force.x = force.total * this.deltaX / this.dist;
+            force.y = force.total * this.deltaY / this.dist;
 
             console.log(force);
             return force;
@@ -270,6 +267,12 @@
 
           // Apply forces from springs
           springs.forEach(function(sp){
+
+            // Update distances
+            sp.deltaX = (sp.pm_2.x - sp.pm_1.x)/CANVAS_WIDTH;
+            sp.deltaY = (sp.pm_2.y - sp.pm_1.y)/CANVAS_WIDTH;
+            sp.dist = sp.compute_length();
+
             sp.springForce();
 
             // Muscle controls

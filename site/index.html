@@ -13,18 +13,19 @@
         var CANVAS_HEIGHT = CANVAS_WIDTH*9/16;
 
         var PM_ALPHA = 0.8;
-        var SPRING_ALPHA = 0.2;
+        var SPRING_ALPHA = 0.5;
         var PM_SIZE = 3;
 
         var FPS = 60;
         var TIMESTEP = 1 / FPS;
 
-        var NUM_PM = 5;
+        var NUM_PM = 144;
         // One of:
         //  - "RECTANGLE"
         //  - "CIRCLE"
         //  - "RING"
-        var SPAWN_FORMATION = "RECTANGLE";
+        //  - "UNIFORM_RING"
+        var SPAWN_FORMATION = "UNIFORM_RING";
         var SPAWN_SIZE = 0.5;
 
         var GRAVITY = 0.5;
@@ -114,9 +115,20 @@
 
             new pointMass(x_i, y_i);
           }
-        }
-        // TODO: add uniform ring formation
+        } else if (SPAWN_FORMATION == "UNIFORM_RING"){
+          center_x = CANVAS_WIDTH/2;
+          center_y = CANVAS_HEIGHT/2;
+          max_radius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) / 2;
+          radius = max_radius * SPAWN_SIZE;
 
+          for (var i = 1; i <= NUM_PM; i++){
+            theta_i = i / NUM_PM * 2 * Math.PI;
+            x_i = center_x + radius*Math.cos(theta_i);
+            y_i = center_y + radius*Math.sin(theta_i);
+
+            new pointMass(x_i, y_i);
+          }
+        }
 
         // TODO: add option to connect neighbours and k-off neighbours instead
         connectivityMatrix = createArray(NUM_PM, NUM_PM);

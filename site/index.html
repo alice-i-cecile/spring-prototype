@@ -14,6 +14,7 @@
         var FPS = 30;
 
         var GRAVITY = 0.8;
+        var NUM_BALLS = 3;
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -51,7 +52,10 @@
           }
         }
 
-        var player = new pointMass(CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
+        for (var i = 1; i <= NUM_BALLS; i++){
+          new pointMass(Math.random()*CANVAS_WIDTH,
+                        Math.random()*CANVAS_HEIGHT);
+        }
 
         function update() {
           pointMasses.forEach(function(pm){

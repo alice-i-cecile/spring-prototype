@@ -13,17 +13,18 @@
         var CANVAS_HEIGHT = 900;
         var FPS = 30;
 
-        var NUM_PM = 5;
+        var NUM_PM = 500;
         var PM_SIZE = 3;
         var MAX_SIZE = 0.5;
 
-        var GRAVITY = 0.3;
+        var GRAVITY = 0.5;
         var ACCELERATION_RATE = 1;
         var DRAG_COEFFICIENT = 0.05;
         var ELASTICITY = 0.8;
         var PM_MASS = 1;
 
         var SPRING_STIFFNESS = 0.1;
+        var CONNECTIVITY = 0.01;
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -73,7 +74,7 @@
         // Denotes fully singly connected graph
         for (var i = 0; i <= NUM_PM - 1; i++){
           for (var j = 0; j <= NUM_PM - 1; j++){
-            if (i > j){
+            if (i > j && Math.random() < CONNECTIVITY){
               connectivityMatrix[i][j] = 1;
             } else {
               connectivityMatrix[i][j] = 0;

@@ -190,6 +190,25 @@
             canvas.stroke();
           }
 
+          springForce() {
+            // Hooke's law
+            var deltaX = (this.pm_2.x - this.pm_1.x) / CANVAS_WIDTH;
+            var deltaY = (this.pm_2.y - this.pm_1.y) / CANVAS_WIDTH;
+            var dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+            // If distance becomes zero then object disappears
+            dist = Math.max(dist, 1e-6);
+
+            var F_total = -1 * this.stiffness * (this.length - dist);
+            var F_x = F_total * deltaX / dist;
+            var F_y = F_total * deltaY / dist;
+
+            this.pm_1.a_x += F_x / this.pm_1.mass;
+            this.pm_2.a_x -= F_x / this.pm_2.mass;
+
+            this.pm_1.a_y += F_y / this.pm_1.mass;
+            this.pm_2.a_y -= F_y / this.pm_2.mass;
+          }
+
           muscle(){
             // Relative strength is the fraction of the lenth the muscle can change
             var force = {};
@@ -198,6 +217,8 @@
             deltaX = (this.pm_2.x - this.pm_1.x) / CANVAS_WIDTH;
             deltaY = (this.pm_2.y - this.pm_1.y) / CANVAS_WIDTH;
             dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+            // If distance becomes zero then object disappears
+            dist = Math.max(dist, 1e-6);
 
             force.x = force.total * deltaX / dist;
             force.y = force.total * deltaY / dist;
@@ -278,27 +299,9 @@
 
         // TODO: move into Spring class
         function forces(sp){
-          // Hooke's law
-          // TODO: add dampened springs
-          deltaX = (sp.pm_2.x - sp.pm_1.x) / CANVAS_WIDTH;
-          deltaY = (sp.pm_2.y - sp.pm_1.y) / CANVAS_WIDTH;
-          dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY);
-          // If distance becomes zero then object disappears
-          dist = Math.max(dist, 1e-6);
-
-          F_total = -1 * sp.stiffness * (sp.length - dist);
-          F_x = F_total * deltaX / dist;
-          F_y = F_total * deltaY / dist;
-
-          sp.pm_1.a_x += F_x / sp.pm_1.mass;
-          sp.pm_2.a_x -= F_x / sp.pm_2.mass;
-
-          sp.pm_1.a_y += F_y / sp.pm_1.mass;
-          sp.pm_2.a_y -= F_y / sp.pm_2.mass;
-
+          sp.springForce();
 
           // Muscle controls
-
           if (keydown.space){
             sp.expand();
           }

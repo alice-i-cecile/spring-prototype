@@ -11,3 +11,8 @@ function createArray(length) {
 
     return arr;
 }
+
+// Proper modulus function that follows ring arithmetic
+Number.prototype.mod = function(n) {
+    return ((this%n)+n)%n;
+};

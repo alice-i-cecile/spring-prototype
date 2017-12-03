@@ -19,7 +19,7 @@
         var FPS = 60;
         var TIMESTEP = 1 / FPS;
 
-        var NUM_PM = 144;
+        var NUM_PM = 11;
         // One of:
         //  - "RECTANGLE"
         //  - "CIRCLE"
@@ -28,16 +28,18 @@
         var SPAWN_FORMATION = "UNIFORM_RING";
         var SPAWN_SIZE = 0.5;
 
-        var GRAVITY = 0.5;
+        var GRAVITY = 0.1;
         var CONTROL_FORCE = 1;
-        var DRAG_COEFFICIENT = 0.02;
+        var DRAG_COEFFICIENT = 0.001;
         var ELASTICITY = 1;
         var PM_MASS = 1;
 
-        var SPRING_STIFFNESS = 10;
+        var SPRING_STIFFNESS = 500;
+        // Array denotes connect k-neighbours; use keys to show connections
+        // e.g. [1,2] connects neighbours and adjacent
+        // Number means to form fraction of possible connections at random
         // Use n_connections / (NUM_PM * (NUM_PM - 1)) for scale invariance
-        var CONNECTIVITY = 1;
-
+        var CONNECTIVITY = [1,2,3];
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -80,6 +82,7 @@
         }
 
         // Create point masses at random
+        // TODO: change to case statement
         if (SPAWN_FORMATION == "RECTANGLE"){
           minSpawnX = CANVAS_WIDTH/2  -  CANVAS_WIDTH*SPAWN_SIZE/2;
           minSpawnY = CANVAS_HEIGHT/2 - CANVAS_HEIGHT*SPAWN_SIZE/2;
@@ -130,15 +133,32 @@
           }
         }
 
-        // TODO: add option to connect neighbours and k-off neighbours instead
         connectivityMatrix = createArray(NUM_PM, NUM_PM);
 
-        // Set the upper triangular matrix to 1
-        // Denotes fully singly connected graph
+        // CONNECTIVITY needs to be complemented with NUM_PM - CONNECTIVITY
+        // Ensures proper looping
+        if (CONNECTIVITY instanceof Array){
+          CONNECTIVITY = CONNECTIVITY.concat(CONNECTIVITY.map(x => NUM_PM - x));
+        }
+
         for (var i = 0; i <= NUM_PM - 1; i++){
           for (var j = 0; j <= NUM_PM - 1; j++){
-            if (i > j && Math.random() < CONNECTIVITY){
-              connectivityMatrix[i][j] = 1;
+            // Use only the upper triangular matrix to ensure single connections
+            if (i > j){
+              if (CONNECTIVITY instanceof Array){
+                // Connect k-neighbours
+                // inArray returns -1 when not found
+                if (jQuery.inArray((i-j).mod(NUM_PM), CONNECTIVITY) != -1){
+                  connectivityMatrix[i][j] = 1;
+                } else {
+                  connectivityMatrix[i][j] = 0;
+                }
+              // Random connections
+              } else if (Math.random() < CONNECTIVITY) {
+                connectivityMatrix[i][j] = 1;
+              } else {
+                connectivityMatrix[i][j] = 0;
+              }
             } else {
               connectivityMatrix[i][j] = 0;
             }

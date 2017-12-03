@@ -19,19 +19,23 @@
         var FPS = 60;
         var TIMESTEP = 1 / FPS;
 
-        var NUM_PM = 1000;
-        var SPAWN_FORMATION = "RING";
+        var NUM_PM = 5;
+        // One of:
+        //  - "RECTANGLE"
+        //  - "CIRCLE"
+        //  - "RING"
+        var SPAWN_FORMATION = "RECTANGLE";
         var SPAWN_SIZE = 0.5;
 
-        var GRAVITY = 0.4;
+        var GRAVITY = 0.5;
         var CONTROL_FORCE = 1;
         var DRAG_COEFFICIENT = 0.02;
-        var ELASTICITY = 0.9;
+        var ELASTICITY = 1;
         var PM_MASS = 1;
 
-        var SPRING_STIFFNESS = 100;
+        var SPRING_STIFFNESS = 10;
         // Use n_connections / (NUM_PM * (NUM_PM - 1)) for scale invariance
-        var CONNECTIVITY = 10000 / (NUM_PM * (NUM_PM - 1));
+        var CONNECTIVITY = 1;
 
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
@@ -279,10 +283,18 @@
             pm.v_y *= -pm.elasticity;
           }
 
-          // Enforce existence in game area
-          // TODO: Conserve extra energy to prevent weird syncing
-          pm.x = pm.x.clamp(0, CANVAS_WIDTH);
-          pm.y = pm.y.clamp(0, CANVAS_HEIGHT);
+          // Enforce existence in game area by rebounding
+          if (pm.x < 0){
+            pm.x = 0 - pm.elasticity*(pm.x - 0);
+          } else if (pm.x > CANVAS_WIDTH){
+            pm.x = CANVAS_WIDTH - pm.elasticity*(pm.x - CANVAS_WIDTH);
+          }
+
+          if (pm.y < 0){
+            pm.y = 0 - pm.elasticity*(pm.y - 0);
+          } else if (pm.y > CANVAS_HEIGHT){
+            pm.y = CANVAS_HEIGHT - pm.elasticity*(pm.y - CANVAS_HEIGHT);
+          }
         }
 
       //]]>

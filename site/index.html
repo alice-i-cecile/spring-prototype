@@ -13,8 +13,12 @@
         var CANVAS_HEIGHT = 900;
         var FPS = 30;
 
-        var GRAVITY = 0.8;
-        var NUM_PM = 3;
+        var GRAVITY = 0.5;
+        var NUM_PM = 4;
+        var ACCELERATION_RATE = 1;
+        var DRAG_COEFFICIENT = 0.05;
+        var ELASTICITY = 0.8;
+        var SPRING_STIFFNESS = 0.1;
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -35,9 +39,12 @@
             this.v_x = 0;
             this.v_y = 0;
 
-            this.acceleration_rate = 1;
-            this.drag_coefficient = 0.01;
-            this.elasticity = 0.8;
+            this.acceleration_rate = ACCELERATION_RATE;
+            this.drag_coefficient = DRAG_COEFFICIENT;
+            this.elasticity = ELASTICITY;
+            // TODO: add mass
+
+            // TODO: turn into point masses
             this.radius = 15;
 
             pointMasses.push(this);
@@ -78,6 +85,11 @@
             this.pm_1 = pm_1;
             this.pm_2 = pm_2;
 
+            this.length = Math.sqrt((pm_2.x - pm_1.x)*(pm_2.x - pm_1.x) +
+                                    (pm_2.y - pm_1.y)*(pm_2.y - pm_1.y));
+
+            this.stiffness = SPRING_STIFFNESS;
+
             springs.push(this);
           }
 
@@ -99,6 +111,10 @@
         }
 
         function update() {
+          springs.forEach(function(sp){
+            forces(sp);
+          })
+
           pointMasses.forEach(function(pm){
             controls(pm);
 
@@ -118,6 +134,27 @@
           springs.forEach(function(sp){
             sp.draw();
           })
+        }
+
+        function forces(sp){
+          // Hooke's law
+          deltaX = sp.pm_2.x - sp.pm_1.x;
+          deltaY = sp.pm_2.y - sp.pm_1.y;
+          dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+          F_total = -1 * sp.stiffness * (sp.length - dist);
+
+          F_x = F_total * deltaX / dist;
+          F_y = F_total * deltaY / dist;
+
+          console.log(F_total)
+
+          // TODO: account for masses
+          sp.pm_1.v_x += F_x;
+          sp.pm_2.v_x -= F_x;
+
+          sp.pm_1.v_y += F_y;
+          sp.pm_2.v_y -= F_y;
+
         }
 
         function controls(pm) {
@@ -148,6 +185,7 @@
         }
 
         function physics(pm){
+          // TODO: add explicit acceration?
           // Gravity
           pm.v_y += GRAVITY;
 

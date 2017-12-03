@@ -142,9 +142,10 @@
           deltaX = sp.pm_2.x - sp.pm_1.x;
           deltaY = sp.pm_2.y - sp.pm_1.y;
           dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY);
-          F_total = -1 * sp.stiffness * (sp.length - dist);
+          // If distance becomes zero then object disappears
+          dist = Math.max(dist, 1e-6);
 
-          // FIXME: if distance becomes zero then object disappears
+          F_total = -1 * sp.stiffness * (sp.length - dist);
           F_x = F_total * deltaX / dist;
           F_y = F_total * deltaY / dist;
 

@@ -12,8 +12,10 @@
         var CANVAS_WIDTH = 1600;
         var CANVAS_HEIGHT = 900;
         var FPS = 30;
+        var PM_ALPHA = 0.8;
+        var SPRING_ALPHA = 0.2;
 
-        var NUM_PM = 500;
+        var NUM_PM = 1000;
         var PM_SIZE = 3;
         var MAX_SIZE = 0.5;
 
@@ -24,7 +26,7 @@
         var PM_MASS = 1;
 
         var SPRING_STIFFNESS = 0.1;
-        var CONNECTIVITY = 0.01;
+        var CONNECTIVITY = 0.005;
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -129,11 +131,16 @@
 
         function draw() {
           canvas.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+          canvas.globalAlpha = 1;
           canvas.strokeRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+          canvas.globalAlpha = PM_ALPHA;
           pointMasses.forEach(function(pm){
             pm.draw();
           })
 
+          canvas.globalAlpha = SPRING_ALPHA;
           springs.forEach(function(sp){
             sp.draw();
           })

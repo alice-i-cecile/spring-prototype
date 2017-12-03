@@ -13,8 +13,9 @@
         var CANVAS_HEIGHT = 900;
         var FPS = 30;
 
-        var NUM_PM = 4;
+        var NUM_PM = 20;
         var PM_SIZE = 5;
+        var MAX_SIZE = 0.5;
 
         var GRAVITY = 0.5;
         var ACCELERATION_RATE = 1;
@@ -61,8 +62,8 @@
 
         // Create point masses at random
         for (var i = 1; i <= NUM_PM; i++){
-          new pointMass(Math.random()*CANVAS_WIDTH,
-                        Math.random()*CANVAS_HEIGHT);
+          new pointMass(Math.random()*CANVAS_WIDTH*MAX_SIZE,
+                        Math.random()*CANVAS_HEIGHT*MAX_SIZE);
         }
 
         connectivityMatrix = createArray(NUM_PM, NUM_PM);
@@ -143,6 +144,7 @@
           dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY);
           F_total = -1 * sp.stiffness * (sp.length - dist);
 
+          // FIXME: if distance becomes zero then object disappears
           F_x = F_total * deltaX / dist;
           F_y = F_total * deltaY / dist;
 

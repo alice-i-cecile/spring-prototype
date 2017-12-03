@@ -19,7 +19,7 @@
         var FPS = 60;
         var TIMESTEP = 1 / FPS;
 
-        var NUM_PM = 1001;
+        var NUM_PM = 1000;
         // One of:
         //  - "RECTANGLE"
         //  - "CIRCLE"
@@ -30,8 +30,8 @@
 
         var GRAVITY = 0;
         var CONTROL_FORCE = 1;
-        var DRAG_COEFFICIENT = 0.001;
-        var ELASTICITY = 1;
+        var DRAG_COEFFICIENT = 0.4;
+        var ELASTICITY = 0.9;
         var PM_MASS = 1;
 
         var SPRING_STIFFNESS = 400;
@@ -40,7 +40,7 @@
         // Number means to form fraction of possible connections at random
         // Use n_connections / (NUM_PM * (NUM_PM - 1)) for scale invariance
         var RELATIVE_STRENGTH = 0.2;
-        var CONNECTIVITY = [1,2,3,4,5,50];
+        var CONNECTIVITY = [1,2,3,4,5];
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -64,6 +64,9 @@
 
             this.a_x = 0;
             this.a_y = 0;
+
+            this.F_x = 0;
+            this.F_y = 0;
 
             this.CONTROL_FORCE = CONTROL_FORCE;
             this.drag_coefficient = DRAG_COEFFICIENT;
@@ -191,34 +194,35 @@
           }
 
           springForce() {
-            // Hooke's law
             var deltaX = (this.pm_2.x - this.pm_1.x) / CANVAS_WIDTH;
             var deltaY = (this.pm_2.y - this.pm_1.y) / CANVAS_WIDTH;
             var dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
             // If distance becomes zero then object disappears
             dist = Math.max(dist, 1e-6);
 
-            var F_total = -1 * this.stiffness * (this.length - dist);
-            var F_x = F_total * deltaX / dist;
-            var F_y = F_total * deltaY / dist;
+            // Hooke's law
+            var force = {};
+            force.total = -1 * this.stiffness * (this.length - dist);
+            force.x = force.total * deltaX / dist;
+            force.y = force.total * deltaY / dist;
 
-            this.pm_1.a_x += F_x / this.pm_1.mass;
-            this.pm_2.a_x -= F_x / this.pm_2.mass;
+            this.pm_1.F_x += force.x;
+            this.pm_2.F_x -= force.x;
 
-            this.pm_1.a_y += F_y / this.pm_1.mass;
-            this.pm_2.a_y -= F_y / this.pm_2.mass;
+            this.pm_1.F_y += force.y;
+            this.pm_2.F_y -= force.y;
           }
 
           muscle(){
+            var deltaX = (this.pm_2.x - this.pm_1.x) / CANVAS_WIDTH;
+            var deltaY = (this.pm_2.y - this.pm_1.y) / CANVAS_WIDTH;
+            var dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+            // If distance becomes zero then object disappears
+            dist = Math.max(dist, 1e-6);
+
             // Relative strength is the fraction of the lenth the muscle can change
             var force = {};
             force.total = this.strength * this.length;
-
-            deltaX = (this.pm_2.x - this.pm_1.x) / CANVAS_WIDTH;
-            deltaY = (this.pm_2.y - this.pm_1.y) / CANVAS_WIDTH;
-            dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY);
-            // If distance becomes zero then object disappears
-            dist = Math.max(dist, 1e-6);
 
             force.x = force.total * deltaX / dist;
             force.y = force.total * deltaY / dist;
@@ -229,20 +233,20 @@
 
           contract(){
             var force = this.muscle()
-            this.pm_1.a_x += force.x/this.pm_1.mass;
-            this.pm_2.a_x -= force.x/this.pm_2.mass;
+            this.pm_1.F_x += force.x;
+            this.pm_2.F_x -= force.x;
 
-            this.pm_1.a_y += force.y/this.pm_1.mass;
-            this.pm_2.a_y -= force.y/this.pm_2.mass;
+            this.pm_1.F_y += force.y;
+            this.pm_2.F_y -= force.y;
           }
 
           expand(){
             var force = this.muscle()
-            this.pm_1.a_x -= force.x/this.pm_1.mass;
-            this.pm_2.a_x += force.x/this.pm_2.mass;
+            this.pm_1.F_x -= force.x;
+            this.pm_2.F_x += force.x;
 
-            this.pm_1.a_y -= force.y/this.pm_1.mass;
-            this.pm_2.a_y += force.y/this.pm_2.mass;
+            this.pm_1.F_y -= force.y;
+            this.pm_2.F_y += force.y;
           }
         }
 
@@ -256,67 +260,55 @@
         }
 
         function update() {
-
-          // Reset acceleration for the timestep
+          // Reset forces and acceleration for the timestep
           pointMasses.forEach(function(pm){
+            pm.F_x = 0;
+            pm.F_y = 0;
             pm.a_x = 0;
             pm.a_y = 0;
           })
 
+          // Apply forces from springs
           springs.forEach(function(sp){
-            forces(sp);
+            sp.springForce();
+
+            // Muscle controls
+            if (keydown.space){
+              sp.expand();
+            }
+
+            if (keydown.ctrl){
+              sp.contract();
+            }
           })
 
+          // Apply point specific forces
           pointMasses.forEach(function(pm){
             controls(pm);
 
             physics(pm);
+          })
+
+          // Apply kinematics
+          pointMasses.forEach(function(pm){
+            pm.a_x = pm.F_x / pm.mass;
+            pm.a_y = pm.F_y / pm.mass;
+
+            pm.v_x += pm.a_x * TIMESTEP;
+            pm.v_y += pm.a_y * TIMESTEP;
+
+            pm.x += pm.v_x * TIMESTEP * CANVAS_WIDTH;
+            pm.y += pm.v_y * TIMESTEP * CANVAS_WIDTH;
 
             check_collisions(pm);
           })
-
-        }
-
-        function draw() {
-          canvas.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-          canvas.globalAlpha = 1;
-          canvas.strokeRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-
-          canvas.font="20px Courier";
-          canvas.fillText(`FPS: ${FPS}`, 0.9*CANVAS_WIDTH, 0.05*CANVAS_HEIGHT);
-
-          canvas.globalAlpha = PM_ALPHA;
-          pointMasses.forEach(function(pm){
-            pm.draw();
-          })
-
-          canvas.globalAlpha = SPRING_ALPHA;
-          springs.forEach(function(sp){
-            sp.draw();
-          })
-        }
-
-        // TODO: move into Spring class
-        function forces(sp){
-          sp.springForce();
-
-          // Muscle controls
-          if (keydown.space){
-            sp.expand();
-          }
-
-          if (keydown.ctrl){
-            sp.contract();
-          }
-
         }
 
         function controls(pm) {
           // Correct for faster diagonal movement
           // Sum of vectors must be same as in case where moving along one axis
           // so each is scaled by 1/sqrt(2)
-          step_CONTROL_FORCE = pm.CONTROL_FORCE;
+          var step_CONTROL_FORCE = pm.CONTROL_FORCE;
 
           if ((keydown.left || keydown.right) && (keydown.up || keydown.down)){
             step_CONTROL_FORCE *= 0.70710678118;
@@ -324,38 +316,29 @@
 
           // Movement controls
           if(keydown.left) {
-            pm.a_x -= step_CONTROL_FORCE / pm.mass;
+            pm.F_x -= step_CONTROL_FORCE;
           }
 
           if(keydown.right) {
-            pm.a_x += step_CONTROL_FORCE / pm.mass;
+            pm.F_x += step_CONTROL_FORCE;
           }
 
           if(keydown.up) {
-            pm.a_y -= step_CONTROL_FORCE / pm.mass;
+            pm.F_y -= step_CONTROL_FORCE;
           }
 
           if(keydown.down) {
-            pm.a_y += step_CONTROL_FORCE / pm.mass;
+            pm.F_y += step_CONTROL_FORCE;
           }
         }
 
-        // TODO: abstract more cleanly
-        // to allow vectorization and easier scale-independence
         function physics(pm){
           // Gravity
-          pm.a_y += GRAVITY;
+          pm.F_y += GRAVITY*pm.mass;
 
           // Drag
-          pm.a_x -= pm.v_x * (1 - pm.drag_coefficient);
-          pm.a_y -= pm.v_y * (1 - pm.drag_coefficient);
-
-          // Movement
-          pm.v_x += pm.a_x * TIMESTEP;
-          pm.v_y += pm.a_y * TIMESTEP;
-
-          pm.x += pm.v_x * TIMESTEP * CANVAS_WIDTH;
-          pm.y += pm.v_y * TIMESTEP * CANVAS_WIDTH;
+          pm.F_x -= pm.v_x * pm.drag_coefficient;
+          pm.F_y -= pm.v_y * pm.drag_coefficient;
         }
 
         function check_collisions(pm) {
@@ -379,6 +362,26 @@
           } else if (pm.y > CANVAS_HEIGHT){
             pm.y = CANVAS_HEIGHT - pm.elasticity*(pm.y - CANVAS_HEIGHT);
           }
+        }
+
+        function draw() {
+          canvas.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+          canvas.globalAlpha = 1;
+          canvas.strokeRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+          canvas.font="20px Courier";
+          canvas.fillText(`FPS: ${FPS}`, 0.9*CANVAS_WIDTH, 0.05*CANVAS_HEIGHT);
+
+          canvas.globalAlpha = PM_ALPHA;
+          pointMasses.forEach(function(pm){
+            pm.draw();
+          })
+
+          canvas.globalAlpha = SPRING_ALPHA;
+          springs.forEach(function(sp){
+            sp.draw();
+          })
         }
 
       //]]>

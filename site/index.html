@@ -9,24 +9,28 @@
     <h1>Spring Prototype</h1>
     <script type='text/javascript'>
       //<![CDATA[
+        // FIXME: Physics still depends on canvas size
         var CANVAS_WIDTH = 1600;
         var CANVAS_HEIGHT = 900;
-        var FPS = 30;
+
         var PM_ALPHA = 0.8;
         var SPRING_ALPHA = 0.2;
 
-        var NUM_PM = 1000;
+        var FPS = 30;
+        var TIMESTEP = 1 / FPS;
+
+        var NUM_PM = 20;
         var PM_SIZE = 3;
         var MAX_SIZE = 0.5;
 
-        var GRAVITY = 0.5;
-        var ACCELERATION_RATE = 1;
+        var GRAVITY = 16;
+        var CONTROL_FORCE = 1;
         var DRAG_COEFFICIENT = 0.05;
         var ELASTICITY = 0.8;
         var PM_MASS = 1;
 
-        var SPRING_STIFFNESS = 0.1;
-        var CONNECTIVITY = 0.005;
+        var SPRING_STIFFNESS = 0.05;
+        var CONNECTIVITY = 1;
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -36,7 +40,7 @@
         setInterval(function() {
           update();
           draw();
-        }, 1000/FPS);
+        }, 1000 * TIMESTEP);
 
         pointMasses = []
         class pointMass {
@@ -47,7 +51,10 @@
             this.v_x = 0;
             this.v_y = 0;
 
-            this.acceleration_rate = ACCELERATION_RATE;
+            this.a_x = 0;
+            this.a_y = 0;
+
+            this.CONTROL_FORCE = CONTROL_FORCE;
             this.drag_coefficient = DRAG_COEFFICIENT;
             this.elasticity = ELASTICITY;
             this.mass = PM_MASS;
@@ -66,8 +73,8 @@
 
         // Create point masses at random
         for (var i = 1; i <= NUM_PM; i++){
-          new pointMass(Math.random()*CANVAS_WIDTH*MAX_SIZE,
-                        Math.random()*CANVAS_HEIGHT*MAX_SIZE);
+          new pointMass(Math.random() * CANVAS_WIDTH  * MAX_SIZE,
+                        Math.random() * CANVAS_HEIGHT * MAX_SIZE);
         }
 
         connectivityMatrix = createArray(NUM_PM, NUM_PM);
@@ -91,7 +98,8 @@
             this.pm_2 = pm_2;
 
             this.length = Math.sqrt((pm_2.x - pm_1.x)*(pm_2.x - pm_1.x) +
-                                    (pm_2.y - pm_1.y)*(pm_2.y - pm_1.y));
+                                    (pm_2.y - pm_1.y)*(pm_2.y - pm_1.y)) /
+                          CANVAS_WIDTH;
 
             this.stiffness = SPRING_STIFFNESS;
 
@@ -116,6 +124,13 @@
         }
 
         function update() {
+
+          // Reset acceleration for the timestep
+          pointMasses.forEach(function(pm){
+            pm.a_x = 0;
+            pm.a_y = 0;
+          })
+
           springs.forEach(function(sp){
             forces(sp);
           })
@@ -150,7 +165,7 @@
           // Hooke's law
           deltaX = sp.pm_2.x - sp.pm_1.x;
           deltaY = sp.pm_2.y - sp.pm_1.y;
-          dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+          dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY) / CANVAS_WIDTH;
           // If distance becomes zero then object disappears
           dist = Math.max(dist, 1e-6);
 
@@ -158,13 +173,11 @@
           F_x = F_total * deltaX / dist;
           F_y = F_total * deltaY / dist;
 
-          console.log(F_total)
+          sp.pm_1.a_x += F_x / sp.pm_1.mass;
+          sp.pm_2.a_x -= F_x / sp.pm_2.mass;
 
-          sp.pm_1.v_x += F_x / sp.pm_1.mass;
-          sp.pm_2.v_x -= F_x / sp.pm_2.mass;
-
-          sp.pm_1.v_y += F_y / sp.pm_1.mass;
-          sp.pm_2.v_y -= F_y / sp.pm_2.mass;
+          sp.pm_1.a_y += F_y / sp.pm_1.mass;
+          sp.pm_2.a_y -= F_y / sp.pm_2.mass;
 
         }
 
@@ -172,41 +185,44 @@
           // Correct for faster diagonal movement
           // Sum of vectors must be same as in case where moving along one axis
           // so each is scaled by 1/sqrt(2)
-          step_acceleration_rate = pm.acceleration_rate
+          step_CONTROL_FORCE = pm.CONTROL_FORCE;
+
           if ((keydown.left || keydown.right) && (keydown.up || keydown.down)){
-            step_acceleration_rate *= 0.70710678118;
+            step_CONTROL_FORCE *= 0.70710678118;
           }
 
           // Movement controls
           if(keydown.left) {
-            pm.v_x -= step_acceleration_rate / pm.mass;
+            pm.a_x -= step_CONTROL_FORCE / pm.mass;
           }
 
           if(keydown.right) {
-            pm.v_x += step_acceleration_rate / pm.mass;
+            pm.a_x += step_CONTROL_FORCE / pm.mass;
           }
 
           if(keydown.up) {
-            pm.v_y -= step_acceleration_rate / pm.mass;
+            pm.a_y -= step_CONTROL_FORCE / pm.mass;
           }
 
           if(keydown.down) {
-            pm.v_y += step_acceleration_rate / pm.mass;
+            pm.a_y += step_CONTROL_FORCE / pm.mass;
           }
         }
 
         function physics(pm){
-          // TODO: add explicit acceration?
           // Gravity
-          pm.v_y += GRAVITY;
+          pm.a_y += GRAVITY;
 
           // Drag
-          pm.v_x *= 1 - pm.drag_coefficient;
-          pm.v_y *= 1 - pm.drag_coefficient;
+          pm.a_x -= pm.v_x * (1 - pm.drag_coefficient);
+          pm.a_y -= pm.v_y * (1 - pm.drag_coefficient);
 
           // Movement
-          pm.x += pm.v_x;
-          pm.y += pm.v_y;
+          pm.v_x += pm.a_x * TIMESTEP;
+          pm.v_y += pm.a_y * TIMESTEP;
+
+          pm.x += pm.v_x * TIMESTEP * CANVAS_WIDTH;
+          pm.y += pm.v_y * TIMESTEP * CANVAS_WIDTH;
         }
 
         function check_collisions(pm) {

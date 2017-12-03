@@ -9,27 +9,26 @@
     <h1>Spring Prototype</h1>
     <script type='text/javascript'>
       //<![CDATA[
-        // FIXME: Physics still depends on canvas size
         var CANVAS_WIDTH = 1600;
-        var CANVAS_HEIGHT = 900;
+        var CANVAS_HEIGHT = CANVAS_WIDTH*9/16;
 
         var PM_ALPHA = 0.8;
         var SPRING_ALPHA = 0.2;
 
-        var FPS = 30;
+        var FPS = 10;
         var TIMESTEP = 1 / FPS;
 
-        var NUM_PM = 20;
+        var NUM_PM = 5;
         var PM_SIZE = 3;
         var MAX_SIZE = 0.5;
 
-        var GRAVITY = 16;
+        var GRAVITY = 0.5;
         var CONTROL_FORCE = 1;
         var DRAG_COEFFICIENT = 0.05;
         var ELASTICITY = 0.8;
         var PM_MASS = 1;
 
-        var SPRING_STIFFNESS = 0.05;
+        var SPRING_STIFFNESS = 10;
         var CONNECTIVITY = 1;
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
@@ -142,6 +141,7 @@
 
             check_collisions(pm);
           })
+
         }
 
         function draw() {
@@ -163,9 +163,9 @@
 
         function forces(sp){
           // Hooke's law
-          deltaX = sp.pm_2.x - sp.pm_1.x;
-          deltaY = sp.pm_2.y - sp.pm_1.y;
-          dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY) / CANVAS_WIDTH;
+          deltaX = (sp.pm_2.x - sp.pm_1.x) / CANVAS_WIDTH;
+          deltaY = (sp.pm_2.y - sp.pm_1.y) / CANVAS_WIDTH;
+          dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY);
           // If distance becomes zero then object disappears
           dist = Math.max(dist, 1e-6);
 

@@ -18,7 +18,7 @@
         var FPS = 30;
         var TIMESTEP = 1 / FPS;
 
-        var NUM_PM = 5;
+        var NUM_PM = 10000;
         var PM_SIZE = 3;
         var MAX_SIZE = 0.5;
 
@@ -28,8 +28,8 @@
         var ELASTICITY = 0.8;
         var PM_MASS = 1;
 
-        var SPRING_STIFFNESS = 10;
-        var CONNECTIVITY = 1;
+        var SPRING_STIFFNESS = 300;
+        var CONNECTIVITY = 30000 / (NUM_PM * (NUM_PM - 1));
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -72,9 +72,12 @@
         }
 
         // Create point masses at random
+        minSpawnX = CANVAS_WIDTH/2  -  CANVAS_WIDTH*MAX_SIZE/2
+        minSpawnY = CANVAS_HEIGHT/2 - CANVAS_HEIGHT*MAX_SIZE/2
+
         for (var i = 1; i <= NUM_PM; i++){
-          new pointMass(Math.random() * CANVAS_WIDTH  * MAX_SIZE,
-                        Math.random() * CANVAS_HEIGHT * MAX_SIZE);
+          new pointMass(minSpawnX + Math.random() * CANVAS_WIDTH  * MAX_SIZE,
+                        minSpawnY + Math.random() * CANVAS_HEIGHT * MAX_SIZE);
         }
 
         connectivityMatrix = createArray(NUM_PM, NUM_PM);

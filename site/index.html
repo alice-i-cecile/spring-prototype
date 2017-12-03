@@ -14,7 +14,7 @@
         var FPS = 30;
 
         var GRAVITY = 0.8;
-        var NUM_BALLS = 3;
+        var NUM_PM = 3;
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -52,9 +52,50 @@
           }
         }
 
-        for (var i = 1; i <= NUM_BALLS; i++){
+        // Create point masses at random
+        for (var i = 1; i <= NUM_PM; i++){
           new pointMass(Math.random()*CANVAS_WIDTH,
                         Math.random()*CANVAS_HEIGHT);
+        }
+
+        connectivityMatrix = createArray(NUM_PM, NUM_PM);
+
+        // Set the upper triangular matrix to 1
+        // Denotes fully singly connected graph
+        for (var i = 0; i <= NUM_PM - 1; i++){
+          for (var j = 0; j <= NUM_PM - 1; j++){
+            if (i > j){
+              connectivityMatrix[i][j] = 1;
+            } else {
+              connectivityMatrix[i][j] = 0;
+            }
+          }
+        }
+
+        springs = [];
+        class spring {
+          constructor (pm_1, pm_2){
+            this.pm_1 = pm_1;
+            this.pm_2 = pm_2;
+
+            springs.push(this);
+          }
+
+          draw() {
+            canvas.beginPath();
+            canvas.moveTo(this.pm_1.x, this.pm_1.y);
+            canvas.lineTo(this.pm_2.x, this.pm_2.y);
+            canvas.stroke();
+          }
+        }
+
+        // Create springs based on connectivityMatrix
+        for (var i = 0; i <= NUM_PM - 1; i++){
+          for (var j = 0; j <= NUM_PM - 1; j++){
+            if (connectivityMatrix[i][j] == 1){
+              new spring(pointMasses[i], pointMasses[j]);
+            }
+          }
         }
 
         function update() {
@@ -73,6 +114,10 @@
           pointMasses.forEach(function(pm){
             pm.draw();
           })
+
+          springs.forEach(function(sp){
+            sp.draw();
+          })
         }
 
         function controls(pm) {
@@ -81,7 +126,7 @@
           // so each is scaled by 1/sqrt(2)
           step_acceleration_rate = pm.acceleration_rate
           if ((keydown.left || keydown.right) && (keydown.up || keydown.down)){
-            step_acceleration_rate *= 0.70710678118
+            step_acceleration_rate *= 0.70710678118;
           }
 
           // Movement controls

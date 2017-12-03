@@ -13,11 +13,14 @@
         var CANVAS_HEIGHT = 900;
         var FPS = 30;
 
-        var GRAVITY = 0.5;
         var NUM_PM = 4;
+        var PM_SIZE = 5;
+
+        var GRAVITY = 0.5;
         var ACCELERATION_RATE = 1;
         var DRAG_COEFFICIENT = 0.05;
         var ELASTICITY = 0.8;
+
         var SPRING_STIFFNESS = 0.1;
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
@@ -44,18 +47,15 @@
             this.elasticity = ELASTICITY;
             // TODO: add mass
 
-            // TODO: turn into point masses
-            this.radius = 15;
-
             pointMasses.push(this);
           }
 
           draw() {
             canvas.beginPath();
             canvas.arc(this.x, this.y,
-              this.radius,
+              PM_SIZE,
               0, 2*Math.PI);
-            canvas.stroke();
+            canvas.fill();
           }
         }
 
@@ -199,17 +199,17 @@
         }
 
         function check_collisions(pm) {
-          if (pm.x < pm.radius || pm.x > CANVAS_WIDTH - pm.radius){
+          if (pm.x < 0 || pm.x > CANVAS_WIDTH){
             pm.v_x *= -pm.elasticity;
           }
 
-          if (pm.y < pm.radius || pm.y > CANVAS_HEIGHT - pm.radius){
+          if (pm.y < 0 || pm.y > CANVAS_HEIGHT){
             pm.v_y *= -pm.elasticity;
           }
 
           // Enforce existence in game area
-          pm.x = pm.x.clamp(pm.radius, CANVAS_WIDTH - pm.radius);
-          pm.y = pm.y.clamp(pm.radius, CANVAS_HEIGHT - pm.radius);
+          pm.x = pm.x.clamp(0, CANVAS_WIDTH);
+          pm.y = pm.y.clamp(0, CANVAS_HEIGHT);
         }
 
       //]]>

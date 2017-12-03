@@ -14,22 +14,25 @@
 
         var PM_ALPHA = 0.8;
         var SPRING_ALPHA = 0.2;
+        var PM_SIZE = 3;
 
-        var FPS = 30;
+        var FPS = 60;
         var TIMESTEP = 1 / FPS;
 
-        var NUM_PM = 10000;
-        var PM_SIZE = 3;
-        var MAX_SIZE = 0.5;
+        var NUM_PM = 1000;
+        var SPAWN_FORMATION = "RING";
+        var SPAWN_SIZE = 0.5;
 
-        var GRAVITY = 0.5;
+        var GRAVITY = 0.4;
         var CONTROL_FORCE = 1;
-        var DRAG_COEFFICIENT = 0.05;
-        var ELASTICITY = 0.8;
+        var DRAG_COEFFICIENT = 0.02;
+        var ELASTICITY = 0.9;
         var PM_MASS = 1;
 
-        var SPRING_STIFFNESS = 300;
-        var CONNECTIVITY = 30000 / (NUM_PM * (NUM_PM - 1));
+        var SPRING_STIFFNESS = 100;
+        // Use n_connections / (NUM_PM * (NUM_PM - 1)) for scale invariance
+        var CONNECTIVITY = 10000 / (NUM_PM * (NUM_PM - 1));
+
 
         var canvasElement = $("<canvas width='" + CANVAS_WIDTH +
           "' height='" + CANVAS_HEIGHT + "'></canvas");
@@ -72,12 +75,41 @@
         }
 
         // Create point masses at random
-        minSpawnX = CANVAS_WIDTH/2  -  CANVAS_WIDTH*MAX_SIZE/2
-        minSpawnY = CANVAS_HEIGHT/2 - CANVAS_HEIGHT*MAX_SIZE/2
+        if (SPAWN_FORMATION == "RECTANGLE"){
+          minSpawnX = CANVAS_WIDTH/2  -  CANVAS_WIDTH*SPAWN_SIZE/2;
+          minSpawnY = CANVAS_HEIGHT/2 - CANVAS_HEIGHT*SPAWN_SIZE/2;
 
-        for (var i = 1; i <= NUM_PM; i++){
-          new pointMass(minSpawnX + Math.random() * CANVAS_WIDTH  * MAX_SIZE,
-                        minSpawnY + Math.random() * CANVAS_HEIGHT * MAX_SIZE);
+          for (var i = 1; i <= NUM_PM; i++){
+            new pointMass(minSpawnX + Math.random() * CANVAS_WIDTH  * SPAWN_SIZE,
+                          minSpawnY + Math.random() * CANVAS_HEIGHT * SPAWN_SIZE);
+          }
+        } else if (SPAWN_FORMATION == "CIRCLE"){
+          center_x = CANVAS_WIDTH/2;
+          center_y = CANVAS_HEIGHT/2;
+          max_radius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) / 2;
+          radius = max_radius * SPAWN_SIZE;
+
+          for (var i = 1; i <= NUM_PM; i++){
+            r_i = Math.random() * radius;
+            theta_i = Math.random() * 2 * Math.PI;
+            x_i = center_x + r_i*Math.cos(theta_i);
+            y_i = center_y + r_i*Math.sin(theta_i);
+
+            new pointMass(x_i, y_i);
+          }
+        } else if (SPAWN_FORMATION == "RING"){
+          center_x = CANVAS_WIDTH/2;
+          center_y = CANVAS_HEIGHT/2;
+          max_radius = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT) / 2;
+          radius = max_radius * SPAWN_SIZE;
+
+          for (var i = 1; i <= NUM_PM; i++){
+            theta_i = Math.random() * 2 * Math.PI;
+            x_i = center_x + radius*Math.cos(theta_i);
+            y_i = center_y + radius*Math.sin(theta_i);
+
+            new pointMass(x_i, y_i);
+          }
         }
 
         connectivityMatrix = createArray(NUM_PM, NUM_PM);
@@ -170,6 +202,7 @@
 
         function forces(sp){
           // Hooke's law
+          // TODO: add dampened springs
           deltaX = (sp.pm_2.x - sp.pm_1.x) / CANVAS_WIDTH;
           deltaY = (sp.pm_2.y - sp.pm_1.y) / CANVAS_WIDTH;
           dist =  Math.sqrt(deltaX*deltaX + deltaY*deltaY);
@@ -242,6 +275,7 @@
           }
 
           // Enforce existence in game area
+          // TODO: Conserve extra energy to prevent weird syncing
           pm.x = pm.x.clamp(0, CANVAS_WIDTH);
           pm.y = pm.y.clamp(0, CANVAS_HEIGHT);
         }

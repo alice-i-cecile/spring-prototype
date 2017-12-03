@@ -21,6 +21,7 @@
         var ACCELERATION_RATE = 1;
         var DRAG_COEFFICIENT = 0.05;
         var ELASTICITY = 0.8;
+        var PM_MASS = 1;
 
         var SPRING_STIFFNESS = 0.1;
 
@@ -46,7 +47,7 @@
             this.acceleration_rate = ACCELERATION_RATE;
             this.drag_coefficient = DRAG_COEFFICIENT;
             this.elasticity = ELASTICITY;
-            // TODO: add mass
+            this.mass = PM_MASS;
 
             pointMasses.push(this);
           }
@@ -151,12 +152,11 @@
 
           console.log(F_total)
 
-          // TODO: account for masses
-          sp.pm_1.v_x += F_x;
-          sp.pm_2.v_x -= F_x;
+          sp.pm_1.v_x += F_x / sp.pm_1.mass;
+          sp.pm_2.v_x -= F_x / sp.pm_2.mass;
 
-          sp.pm_1.v_y += F_y;
-          sp.pm_2.v_y -= F_y;
+          sp.pm_1.v_y += F_y / sp.pm_1.mass;
+          sp.pm_2.v_y -= F_y / sp.pm_2.mass;
 
         }
 
@@ -171,19 +171,19 @@
 
           // Movement controls
           if(keydown.left) {
-            pm.v_x -= step_acceleration_rate;
+            pm.v_x -= step_acceleration_rate / pm.mass;
           }
 
           if(keydown.right) {
-            pm.v_x += step_acceleration_rate;
+            pm.v_x += step_acceleration_rate / pm.mass;
           }
 
           if(keydown.up) {
-            pm.v_y -= step_acceleration_rate;
+            pm.v_y -= step_acceleration_rate / pm.mass;
           }
 
           if(keydown.down) {
-            pm.v_y += step_acceleration_rate;
+            pm.v_y += step_acceleration_rate / pm.mass;
           }
         }
 

@@ -1,6 +1,6 @@
 // n-dimensional array creation
 // From: https://stackoverflow.com/questions/966225/how-can-i-create-a-two-dimensional-array-in-javascript/966938#966938
-function createArray(length) {
+export function createArray(length) {
     var arr = new Array(length || 0),
         i = length;
 
@@ -11,8 +11,3 @@ function createArray(length) {
 
     return arr;
 }
-
-// Proper modulus function that follows ring arithmetic
-Number.prototype.mod = function(n) {
-    return ((this%n)+n)%n;
-};
